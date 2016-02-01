@@ -89,10 +89,12 @@ class Boids < Gosu::Window
   def initialize width, height
     super(width, height)
     @behaviour = {turn_angle: 3.0, speed: 3.0, limit: 100, visibility: 200}
-    @behaviour_modifiers = {turn_angle: [1, Gosu::KbA, Gosu::KbB],
-                            speed: [1, Gosu::KbC, Gosu::KbD],
-                            limit: [50, Gosu::KbE, Gosu::KbF],
-                            visibility: [50, Gosu::KbG, Gosu::KbH]}
+    @behaviour_modifiers = {turn_angle: [1, :a, :b],
+                            speed: [1, :c, :d],
+                            limit: [50, :e, :f],
+                            visibility: [50, :g, :h]}
+    @font_size = 20
+    @fonts = @behaviour_modifiers.map { |_| Gosu::Font.new(@font_size) }
     @boids = 1.upto(50).map { Boid.new([width, height], @behaviour) }
   end
 
@@ -101,10 +103,11 @@ class Boids < Gosu::Window
   end
 
   def draw
+    i = 0
     p = 0
-    @behaviour.each_pair do |b, i|
-      Gosu::Font.new(10).draw("#{b}: #{i}", 0, p, 0)
-      p += 10
+    @behaviour.each_pair do |b, l|
+      @fonts[i].draw("#{b} (#{@behaviour_modifiers[b][1]},#{@behaviour_modifiers[b][2]}) #{l}", 0, i * @font_size, 0)
+      i += 1
     end
     @boids.each { |x| x.draw }
   end
@@ -112,6 +115,7 @@ class Boids < Gosu::Window
   def button_down(id)
     close if id == Gosu::KbEscape
     @behaviour_modifiers.each_pair do |name, modifier|
+      modifier = modifier.each_with_index.map { |x, i| i == 0 ? x : eval("Gosu::Kb#{x.to_s.upcase}") }
       if id == modifier[1]
         @behaviour[name] -= modifier[0]
       elsif id == modifier[2]
